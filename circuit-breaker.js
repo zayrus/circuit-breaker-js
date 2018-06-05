@@ -27,7 +27,7 @@
   CircuitBreaker.CLOSED = 2;
 
   // Public API
-  // ----------
+  // ----------/
 
   CircuitBreaker.prototype.run = function(command, fallback) {
     if (this.isOpen()) {
@@ -43,7 +43,9 @@
     this._state = CircuitBreaker.CLOSED;
   };
 
-  CircuitBreaker.prototype.forceOpen = function() {
+  CircuitBreaker.prototype.forceOpen = function(seconds) {
+    //optional time to retry calls after forceOpen
+    this._timeToRetry = seconds;
     this._forced = this._state;
     this._state = CircuitBreaker.OPEN;
   };
@@ -53,9 +55,18 @@
     this._forced = null;
   };
 
+  CircuitBreaker.prototype.hasTimeToRetry = function() {
+    return this._timeToRetry;
+  };
+
   CircuitBreaker.prototype.isOpen = function() {
     return this._state == CircuitBreaker.OPEN;
   };
+
+  CircuitBreaker.prototype.isClosed = function() {
+    return this._state == CircuitBreaker.CLOSED;
+  };
+
 
   // Private API
   // -----------
@@ -64,8 +75,10 @@
     var self = this;
     var bucketIndex = 0;
     var bucketDuration = this.windowDuration / this.numBuckets;
+    var configInterval;
+    var optInterval;
 
-    var tick = function() {
+    var tick = function () {
       if (self._buckets.length > self.numBuckets) {
         self._buckets.shift();
       }
@@ -83,7 +96,36 @@
       self._buckets.push(self._createBucket());
     };
 
-    setInterval(tick, bucketDuration);
+    var tock = function() {
+      var _isOpen = self.isOpen();
+      var _isClosed = self.isClosed();
+
+      if (_isOpen) {
+        self._state = CircuitBreaker.HALF_OPEN;
+      }
+
+      if (_isClosed) {
+        clearInterval(optInterval);
+        configInterval = setInterval(tick, bucketDuration);
+      }
+    };
+
+    var chooseTick = function() {
+      var secondsToRetry = self.hasTimeToRetry();
+
+      if (secondsToRetry) {
+        //new interval based in received seconds
+        clearInterval(configInterval);
+        optInterval = setInterval(tock, secondsToRetry);
+      }
+      else {
+        //same as original
+        tick();
+      }
+    };
+
+
+    configInterval = setInterval(chooseTick, bucketDuration);
   };
 
   CircuitBreaker.prototype._createBucket = function() {
@@ -181,3 +223,4 @@
 
   assign('CircuitBreaker', CircuitBreaker);
 })();
+
