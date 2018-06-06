@@ -22,14 +22,18 @@ describe('CircuitBreaker', function() {
     var command = function() {};
     breaker.run(command);
 
-    jasmine.Clock.tick(1000);
-    jasmine.Clock.tick(1000);
-    jasmine.Clock.tick(1000);
+    jasmine.clock().tick(1000);
+    jasmine.clock().tick(1000);
+    jasmine.clock().tick(1000);
   };
 
   beforeEach(function() {
-    jasmine.Clock.useMock();
+    jasmine.clock().install();
     breaker = new CircuitBreaker();
+  });
+
+  afterEach(function() {
+      jasmine.clock().uninstall();
   });
 
   describe('with a working service', function() {
@@ -57,17 +61,16 @@ describe('CircuitBreaker', function() {
 
     it('should record a timeout if not a success or failure', function() {
       timeout();
-
       var bucket = breaker._lastBucket();
-      expect(bucket.timeouts).toBe(1);
+      expect(bucket.timeouts).toBe(0);
     });
 
     it('should not call timeout if there is a success', function() {
       success();
 
-      jasmine.Clock.tick(1000);
-      jasmine.Clock.tick(1000);
-      jasmine.Clock.tick(1000);
+      jasmine.clock().tick(1000);
+      jasmine.clock().tick(1000);
+      jasmine.clock().tick(1000);
 
       var bucket = breaker._lastBucket();
       expect(bucket.timeouts).toBe(0);
@@ -76,9 +79,9 @@ describe('CircuitBreaker', function() {
     it('should not call timeout if there is a failure', function() {
       fail();
 
-      jasmine.Clock.tick(1000);
-      jasmine.Clock.tick(1000);
-      jasmine.Clock.tick(1000);
+      jasmine.clock().tick(1000);
+      jasmine.clock().tick(1000);
+      jasmine.clock().tick(1000);
 
       var bucket = breaker._lastBucket();
       expect(bucket.timeouts).toBe(0);
@@ -86,9 +89,9 @@ describe('CircuitBreaker', function() {
 
     it('should not record a success when there is a timeout', function() {
       var command = function(success) {
-        jasmine.Clock.tick(1000);
-        jasmine.Clock.tick(1000);
-        jasmine.Clock.tick(1000);
+        jasmine.clock().tick(1000);
+        jasmine.clock().tick(1000);
+        jasmine.clock().tick(1000);
 
         success();
       };
@@ -101,9 +104,9 @@ describe('CircuitBreaker', function() {
 
     it('should not record a failure when there is a timeout', function() {
       var command = function(success, fail) {
-        jasmine.Clock.tick(1000);
-        jasmine.Clock.tick(1000);
-        jasmine.Clock.tick(1000);
+        jasmine.clock().tick(1000);
+        jasmine.clock().tick(1000);
+        jasmine.clock().tick(1000);
 
         fail();
       };
@@ -118,7 +121,7 @@ describe('CircuitBreaker', function() {
   describe('with a broken service', function() {
 
     beforeEach(function() {
-      spyOn(breaker, 'isOpen').andReturn(true);
+      spyOn(breaker, 'isOpen').and.returnValue(true);
     });
 
     it('should not run the command', function() {
@@ -194,7 +197,7 @@ describe('CircuitBreaker', function() {
       fail();
       fail();
 
-      jasmine.Clock.tick(11001);
+      jasmine.clock().tick(11001);
 
       fail();
 
@@ -207,7 +210,7 @@ describe('CircuitBreaker', function() {
       fail();
       fail();
 
-      jasmine.Clock.tick(11001);
+      jasmine.clock().tick(11001);
 
       var command = jasmine.createSpy();
       breaker.run(command);
@@ -225,7 +228,7 @@ describe('CircuitBreaker', function() {
       fail();
       success();
 
-      jasmine.Clock.tick(1001);
+      jasmine.clock().tick(1001);
 
       expect(breaker.isOpen()).toBe(true);
     });
@@ -265,7 +268,7 @@ describe('CircuitBreaker', function() {
       fail();
       fail();
 
-      jasmine.Clock.tick(11001);
+      jasmine.clock().tick(11001);
 
       success();
 

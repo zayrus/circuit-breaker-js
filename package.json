@@ -1,7 +1,7 @@
 {
   "name": "circuit-breaker-js",
   "description": "Hystrix-like circuit breaker for JavaScript.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "license": "MIT",
   "author": "Yammer Inc. (http://www.yammer.com/)",
   "repository": {
@@ -11,9 +11,10 @@
   "main": "circuit-breaker.js",
   "devDependencies": {
     "docco": "~0.6.2",
-    "express": "~3.3.8",
+    "express": "^4.16.3",
+    "grunt": "^1.0.3",
     "grunt-contrib-connect": "~0.3.0",
-    "grunt-contrib-jasmine": "~0.5.1",
+    "grunt-contrib-jasmine": "^2.0.1",
     "grunt-contrib-jshint": "~0.3.0"
   },
   "scripts": {
